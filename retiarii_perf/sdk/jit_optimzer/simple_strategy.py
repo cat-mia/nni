@@ -260,7 +260,8 @@ def _logical_node_repalce(phy_graph, trials):
         if edge.tail.name in edge_mapping:
             tail_name = edge.tail.name
             edge.tail = edge_mapping[tail_name][edge_replace_idx[tail_name]]
-            edge_replace_idx[tail_name] += 1
+            if len(edge_mapping[tail_name]) > 1:
+                edge_replace_idx[tail_name] += 1
         named_edge = (edge.head.name, edge.tail.name)
         if named_edge not in edge_set:
             edge_set.add((edge.head.name, edge.tail.name))
