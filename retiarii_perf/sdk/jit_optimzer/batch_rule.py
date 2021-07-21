@@ -4,6 +4,7 @@ from ..graph import NodeType, Node, Edge, Graph
 import copy
 from ..operations import *
 
+# TODO: add hfta ops to batchable_ops
 BATCHABLE_OPS = ['Conv2d','BatchNorm2d','Linear','aten::relu', 'aten::avg_pool2d', 'aten::size', 'aten::Int', 'aten::view', 'aten::add', 'aten::relu']
 class BatchNode(BaseLogicalNode):
     def __init__(self, dup_ops : "List[Node]", graph, cfg):
@@ -59,10 +60,13 @@ class BatchNode(BaseLogicalNode):
                                         )
                         graph_to_replace.hidden_nodes.append(op_pre_view_node)
                         assert(phy_op.operation.type=='Conv2d') # only support batching conv2d for now
+                        # assert(phy_op.operation.type in BATCHABLE_OPS)
                         if phy_op.operation.type=='Conv2d':
                             phy_op.operation.params['in_channels'] *= len(graphs)
                             phy_op.operation.params['out_channels'] *= len(graphs)
                             phy_op.operation.params['groups'] = len(graphs)
+                            # TODO: add param B
+                            phy_op.operation.params['B'] = len(graphs)
                         graph_to_replace.edges.append(Edge(input_node, op_pre_view_node))
                         graph_to_replace.edges.append(Edge(op_pre_view_node, phy_op))
                 output_node = Node(graph_to_replace, NodeType.Output, phy_op.name + '_output')

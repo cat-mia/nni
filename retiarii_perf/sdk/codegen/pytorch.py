@@ -17,8 +17,12 @@ def graph_to_pytorch_model(graph: 'Graph') -> str:
     for node in nodes:
         # 'input_arguments' means the node is `func` type
         if node.operation != None:
-            if 'input_arguments' not in node.operation.params:
-                node_codes.append('self.{} = {}'.format(node.name, node.operation.to_pytorch_init()))
+            # FIXME: hfta node code
+            if node.operation.is_hfta():
+                node_codes.append('self.{} = {}'.format(node.name, node.operation.to_hfta_init()))
+            else:
+                if 'input_arguments' not in node.operation.params:
+                    node_codes.append('self.{} = {}'.format(node.name, node.operation.to_pytorch_init()))
         # else:
         #     node_codes.append('self.{} = None'.format(node.name))
 
@@ -187,6 +191,8 @@ import torch.nn.functional as F
 
 import sdk.custom_ops_torch as CUSTOM
 from nni.nas.pytorch import mutables
+
+from hfta.ops import get_hfta_op_for
 
 {imports}
 

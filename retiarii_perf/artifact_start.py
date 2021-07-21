@@ -10,7 +10,7 @@ import os
 import time
 import argparse
 
-PYTHON_PATH = '/home/zhenhua/py37/bin/python'
+PYTHON_PATH = '/home/user/anaconda3/envs/nasnni/bin/python'
 
 
 def _dump_dedup_trials(optimized_trials, trainer, batch_size=224):
@@ -226,6 +226,7 @@ def micro_op_batching(n_job):
     for trial_pack in optimized_trials[0]:
         with open('dump_batch.json', 'w') as fp:
             json.dump(trial_pack[0].dump(), fp)
+        # trial_pack[0].generate_code(framework='hfta', output_file='./generated/op_batch.py')
         trial_pack[0].generate_code(framework='pytorch', output_file='./generated/op_batch.py')
     print("Start Job")
     iter_time = _profile_op_batch()
@@ -365,7 +366,7 @@ parser.add_argument('expt_name', metavar='EXPT',
                     help='experiment name: [micro_dedup_cpu, \
                         micro_dedup_gpu, micro_batching, \
                         e2e_dali_mnasnset, e2e_spos_mix_parallel]')
-parser.add_argument('--n', default=8, type=int,
+parser.add_argument('--n', default=4, type=int,
                     help='number of jobs to run')
 
 if __name__ == '__main__':

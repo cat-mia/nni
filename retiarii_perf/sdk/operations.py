@@ -12,11 +12,19 @@ class Operation:
         assert _from_factory, 'Operation object can only be created with `Operation.new()`'
         self.type = type
         self.params = parameters
+    
+    def is_hfta(self):
+        if 'B' in self.params:
+            return True
+        return False
 
     def to_tensorflow_init(self) -> str:
         raise NotImplementedError()
 
     def to_pytorch_init(self) -> str:
+        raise NotImplementedError()
+
+    def to_hfta_init(self) -> str:
         raise NotImplementedError()
 
     def update_params(self, **parameters) -> None:
@@ -48,6 +56,9 @@ class FuncOp(Operation):
     def to_pytorch_init(self):
         return None
 
+    def to_hfta_init(self):
+        return None
+
 
 class DataLoader(Operation):
     def to_pytorch_init(self):
@@ -67,6 +78,11 @@ class Identity(Operation):
         parameters = ', '.join(
             [f'{k}={repr(v)}' for k, v in self.params.items()])
         return f'nn.Identity({parameters})'
+    # TODO: for this and below classes
+    def to_hfta_init(self):
+        parameters = ', '.join(
+            [f'{k}={repr(v)}' for k, v in self.params.items()])
+        return f'hfta.Identity({parameters})'
 
 
 class Conv1d(Operation):
@@ -89,6 +105,13 @@ class Conv2d(Operation):
         parameters = ', '.join(
             [f'{k}={repr(v)}' for k, v in self.params.items()])
         return f'nn.Conv2d({parameters})'
+    
+    def to_hfta_init(self):
+        parameters = ', '.join(
+            [f'{k}={repr(v)}' for k, v in self.params.items() if k != 'B'])
+        B = self.params['B']
+        # FIXME: convert to hfta op code
+        return f'get_hfta_op_for(nn.Conv2d,{B})({parameters})'
 
 
 class Conv1d(Operation):
