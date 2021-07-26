@@ -68,7 +68,13 @@ def graph_to_pytorch_model(graph: 'Graph') -> str:
             edge_codes.append('{} = {}'.format(node.name, inputs))
         elif 'input_arguments' not in node.operation.params:
             if not isinstance(inputs, list):
-                edge_codes.append('{} = self.{}({})'.format(node.name, node.name, inputs))
+                if node.operation.is_hfta() and node.operation.type == 'Conv2d':
+                    # TODO: add param B here
+                    edge_codes.append('{} = {}.unsqueeze(1).expand(-1,4,-1,-1,-1).contiguous()'.format(inputs,inputs))
+                    edge_codes.append('{} = self.{}({})'.format(node.name, node.name, inputs))
+                    edge_codes.append('{} = {}[:,0,:,:,:].contiguous()'.format(node.name,node.name))
+                else:
+                    edge_codes.append('{} = self.{}({})'.format(node.name, node.name, inputs))
             else:
                 assert node.operation.type in ['Mask', 'GlobalAvgPool', 'Attention', 'RNN', 'WrapperOp', 'Cell', 'CellStem0', 'CellStem1', 'FixedInputChoice']
                 if node.operation.type == 'Mask': #FIXME: duplicated inputs for MASK
