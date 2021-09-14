@@ -194,6 +194,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 import nni.retiarii.nn.pytorch
+from HFTA import get_hfta_op_for
 
 {}
 
