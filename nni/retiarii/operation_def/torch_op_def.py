@@ -519,3 +519,21 @@ class AtenDet(PyTorchOperation):
     _ori_type_name = ['aten::linalg_det']
     def to_forward_code(self, field: str, output: str, inputs: List[str], inputs_value: List[Any] = None) -> str:
         return f'{output} = torch.det({inputs[0]})'
+
+class HFTAOperation(PytorchOperation):
+    def __init__(self, op_type: str, parameters, max_model_num, input_reshape = False):
+        self.op_type = op_type
+        self.parameters = parameters
+        self.input_reshape = input_reshape
+        self.num_model = max_model_num
+
+    
+    def to_init_code(self) -> str:
+        # check op_type -> nn.xxxx
+        return f'get_hfta_op_for({self.op_type},{self.num_model})({self.parameters})'
+
+    def to_forward_code(self, field: str, output: str, inputs: List[str], inputs_value: List[Any] = None) -> str:
+        if self.input_reshape:
+            # convert input to HFTA format
+            return f'{inputs[0]}.unsqueeze(1).expand(-1, B, -1, -1, -1)'
+        return f'{output} = self.{field}({", ".join(inputs)})'
