@@ -58,7 +58,7 @@ class HFTAOptimizer(AbstractOptimizer):
                         operation_num = len(first_graph_operation)
 
                     if last_node_graph != node_graph: # traverse to next graph
-                        if index != -1 and index != operation_num:
+                        if index != -1 and index != operation_num - 1: # operation numbers are not equal
                             return False
                         # start comparing
                         index = 0
