@@ -54,12 +54,14 @@ class CGOExecutionEngine(AbstractExecutionEngine):
     def __init__(self, devices: List[Device] = None,
                  max_concurrency: int = None,
                  batch_waiting_time: int = 60,
+                 max_hfta_model_num: int = 4
                  ) -> None:
         self._listeners: List[AbstractGraphListener] = []
         self._running_models: Dict[int, Model] = dict()
         self.logical_plan_counter = 0
         self.available_devices: List[Device] = []
         self.max_concurrency: int = max_concurrency
+        self.max_hfta_model_num = max_hfta_model_num
         for device in devices:
             self.available_devices.append(device)
         self.all_devices = self.available_devices.copy()

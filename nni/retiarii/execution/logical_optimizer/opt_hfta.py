@@ -1,6 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+import math
+
+from nni.retiarii.operation_def.torch_op_def import HFTAOperation
 from typing import List, Dict, Tuple
 
 from nni.retiarii.utils import uid
@@ -14,6 +17,39 @@ from .logical_plan import (AbstractLogicalNode, LogicalGraph, LogicalPlan,
 
 
 _supported_evaluators = [MultiModelSupervisedLearningModule]
+
+
+class HFTANode(AbstractLogicalNode):
+    def __init__(self, logical_graph: LogicalGraph, node_id: int,
+                 nodes_to_batch: List[Node], _internal=False):
+        super().__init__(logical_graph, node_id,
+                         "HFTA_batch_" + nodes_to_batch[0].name,
+                         nodes_to_batch[0].operation)
+        self.origin_nodes: List[OriginNode] = nodes_to_batch.copy()
+        self.related_models = [_.original_graph.model for _ in self.origin_nodes]
+
+    def assemble(self, multi_model_placement: Dict[Model, GPUDevice], max_model_num) -> List[Tuple[Node, GPUDevice]]:
+        new_nodes = []
+        for node in self.origin_nodes:
+            if node.original_graph.model in multi_model_placement:
+                for predecessor in node.predecessors():
+                    if '_inputs' in predecessor.name :# predecessor is input node
+                        input_reshape = True
+                        break
+                # if len(multi_model_placement) <= max_model_num, generate 2 or more HFTANodes
+                if len(multi_model_placement) <= max_model_num:
+                    hfta_nodes_num = math.ceil(len(multi_model_placement) / float(max_model_num))
+                    for _ in hfta_nodes_num:
+                        new_nodes.append(Node())
+                hfta_operation = HFTAOperation(node.operation, #params, min(max_model_num, len(multi_model_placement)), 
+                input_reshape)
+                new_node = Node(node.original_graph, node.id,
+                                f'M_{node.original_graph.model.model_id}_{node.name}',
+                                hfta_operation) # hfta operation
+                return new_node, multi_model_placement[node.original_graph.model]
+        raise ValueError(f'HFTABatchNode {self.name} does not contain nodes from multi_model')
+
+
 
 class HFTAOptimizer(AbstractOptimizer):
     def __init__(self) -> None:

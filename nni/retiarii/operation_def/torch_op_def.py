@@ -520,12 +520,12 @@ class AtenDet(PyTorchOperation):
     def to_forward_code(self, field: str, output: str, inputs: List[str], inputs_value: List[Any] = None) -> str:
         return f'{output} = torch.det({inputs[0]})'
 
-class HFTAOperation(PytorchOperation):
-    def __init__(self, op_type: str, parameters, max_model_num, input_reshape = False):
+class HFTAOperation(PyTorchOperation):
+    def __init__(self, op_type: str, parameters, num_model, input_reshape = False):
         self.op_type = op_type
         self.parameters = parameters
         self.input_reshape = input_reshape
-        self.num_model = max_model_num
+        self.num_model = num_model
 
     
     def to_init_code(self) -> str:
